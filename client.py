@@ -2,7 +2,7 @@ import argparse
 import pandas as pd
 import json
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import numpy as np
 parser = argparse.ArgumentParser()
 parser.add_argument('-k','--keys',default='')
@@ -68,4 +68,4 @@ if __name__ == '__main__':
     else:
         data = data.style.apply(labelMatch,axis=1)
 
-    data.to_excel('./result.xlsx')
+    data.to_excel(f'./vehicles-{date.today()}.xlsx')
