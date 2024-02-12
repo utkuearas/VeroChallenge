@@ -34,7 +34,7 @@ if __name__ == '__main__':
     
     keys = args.keys
     colored = args.colored
-    if colored == True:
+    if colored == 'True':
         colored = True
     else:
         colored = False
@@ -50,22 +50,24 @@ if __name__ == '__main__':
     data = data.sort_values('gruppe')
 
     columns = set(data.columns)
+    columns.add('colorCode')
     required_columns = set(keys.split(','))
     hide_col = list(columns-required_columns)
 
+    
     if colored and keys != '':
         if 'labelIds' in keys.split(','):
             data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1).hide(hide_col,axis='columns')
         else:
             data = data.style.apply(styleRow,axis=1).hide(hide_col,axis='columns')
     elif colored:
-        data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1)
+        data = data.style.hide(['colorCode'],axis='columns').apply(styleRow,axis=1).apply(labelMatch,axis=1)
     elif keys != '':
         if 'labelIds' in keys.split(','):
             data = data.style.apply(labelMatch,axis=1).hide(hide_col,axis='columns')
         else:
             data = data.style.hide(hide_col,axis='columns')
     else:
-        data = data.style.apply(labelMatch,axis=1)
+        data = data.style.apply(labelMatch,axis=1).hide(['colorCode'],axis='columns')
 
     data.to_excel(f'./vehicles-{date.today()}.xlsx')

@@ -140,7 +140,7 @@ async def uploadCSV(file: UploadFile=File(...)):
         responses = await asyncio.gather(*labels_f)
         for res in responses:
             color_code = res[0]['colorCode']
-            if color_code is not '':
+            if color_code != '':
                 color_codes[res[0]['id']] = color_code
 
     large['colorCode'] = pd.DataFrame([np.nan]*len(large))
