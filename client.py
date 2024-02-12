@@ -4,6 +4,8 @@ import json
 import requests
 from datetime import datetime, timedelta, date
 import numpy as np
+from copy import deepcopy
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-k','--keys',default='')
 parser.add_argument('-c','--colored',default='True')
@@ -54,20 +56,20 @@ if __name__ == '__main__':
     required_columns = set(keys.split(','))
     hide_col = list(columns-required_columns)
 
-    
     if colored and keys != '':
         if 'labelIds' in keys.split(','):
-            data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1).hide(hide_col,axis='columns')
+            colorCodes = data['colorCode']
+            data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1)
         else:
-            data = data.style.apply(styleRow,axis=1).hide(hide_col,axis='columns')
+            data = data.style.apply(styleRow,axis=1)
     elif colored:
-        data = data.style.hide(['colorCode'],axis='columns').apply(styleRow,axis=1).apply(labelMatch,axis=1)
+        data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1)
     elif keys != '':
         if 'labelIds' in keys.split(','):
-            data = data.style.apply(labelMatch,axis=1).hide(hide_col,axis='columns')
+            data = data.style.apply(labelMatch,axis=1)
         else:
-            data = data.style.hide(hide_col,axis='columns')
+            data = data.style
     else:
-        data = data.style.apply(labelMatch,axis=1).hide(['colorCode'],axis='columns')
+        data = data.style.apply(labelMatch,axis=1)
 
     data.to_excel(f'./vehicles-{date.today()}.xlsx')
