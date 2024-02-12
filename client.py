@@ -31,7 +31,6 @@ def styleRow(row):
 if __name__ == '__main__':
 
     args = parser.parse_args()
-    print(args)
     
     keys = args.keys
     colored = args.colored
@@ -47,11 +46,26 @@ if __name__ == '__main__':
     data = json.loads(res.text)
     data = pd.read_json(data)
     
-    #data = data[data['rnr'].notna()]
+    data = data[data['rnr'].notna()]
     data = data.sort_values('gruppe')
 
-    if colored:
+    columns = set(data.columns)
+    required_columns = set(keys.split(','))
+    hide_col = list(columns-required_columns)
+
+    if colored and keys != '':
+        if 'labelIds' in keys.split(','):
+            data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1).hide(hide_col,axis='columns')
+        else:
+            data = data.style.apply(styleRow,axis=1).hide(hide_col,axis='columns')
+    elif colored:
         data = data.style.apply(styleRow,axis=1).apply(labelMatch,axis=1)
+    elif keys != '':
+        if 'labelIds' in keys.split(','):
+            data = data.style.apply(labelMatch,axis=1).hide(hide_col,axis='columns')
+        else:
+            data = data.style.hide(hide_col,axis='columns')
     else:
         data = data.style.apply(labelMatch,axis=1)
+
     data.to_excel('./result.xlsx')

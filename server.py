@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import requests
 import aiohttp
-from pprint import pprint
 import json
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -71,6 +70,8 @@ async def get_token():
         print('Request token failed')
         return None
     
+    print(res.text)
+    
     token = json.loads(res.text)['oauth']['access_token']
 
     CURRENT_TOKEN['token'] = token
@@ -131,7 +132,7 @@ async def uploadCSV(file: UploadFile=File(...)):
         if i['labelIds']:
            labels.add(str(int(float(str(i['labelIds']).split(',')[0]))))
 
-    #large = large[large['hu'].notna()]
+    large = large[large['hu'].notna()]
 
     color_codes = dict()
     async with aiohttp.ClientSession() as session:
@@ -151,7 +152,7 @@ async def uploadCSV(file: UploadFile=File(...)):
             continue
         if label in color_codes:
             large.loc[i,'colorCode'] = color_codes[label]
-    #large = large.replace('',np.nan)
+    large = large.replace('',np.nan)
 
     result = large.to_json(orient='records')
     
