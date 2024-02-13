@@ -70,7 +70,6 @@ async def get_token():
         print('Request token failed')
         return None
     
-    print(res.text)
     
     token = json.loads(res.text)['oauth']['access_token']
 
@@ -94,13 +93,13 @@ async def uploadCSV(file: UploadFile=File(...)):
     
     # Creating pandas dataframe object
     client_request = pd.read_csv(buffer, sep=';')
-    client_request.to_excel('./client.xlsx')
 
+    # Fetch token for API request
     token = await get_token()
     data = await request_data(token,DATA_URI)
 
+    # Converting to Pandas DataFrame Object
     api_response = pd.DataFrame.from_records(data)
-    api_response.to_excel('./api.xlsx')
 
     api_columns = set(api_response.columns)
     client_columns = set(client_request.columns)
@@ -111,13 +110,15 @@ async def uploadCSV(file: UploadFile=File(...)):
     else:
         large = client_request
         small = api_response
-    
+
+    # Outer join using 3 columns: kurzname gruppe lagerort
     large['kurzname'] = large['kurzname'].astype(str)
     small['kurzname'] = small['kurzname'].astype(str)
     large = large.merge(small, on=['kurzname','gruppe','lagerort'], how='outer')
     large = large.fillna(np.nan)
     large = large.replace('NULL',np.nan)
 
+    # Removing overlapping columns after joinning process
     cols = [i for i in large.columns if i.endswith('_x')]
     for col in cols:
         col_name = col[:len(col)-2]
@@ -127,7 +128,7 @@ async def uploadCSV(file: UploadFile=File(...)):
     large = large.drop_duplicates()
 
     labels = set()
-
+    # Checking valid distinct labelIds
     for _, i in large.iterrows():
         if i['labelIds']:
            labels.add(str(int(float(str(i['labelIds']).split(',')[0]))))
@@ -135,6 +136,7 @@ async def uploadCSV(file: UploadFile=File(...)):
     large = large[large['hu'].notna()]
 
     color_codes = dict()
+    # Fetching color codes by label id using async aiohttp for better performance
     async with aiohttp.ClientSession() as session:
         labels_f = [asyncio.create_task(request_data(token,LABEL_ID+uri,session=session)) for uri in list(labels)]
         responses = await asyncio.gather(*labels_f)
@@ -142,7 +144,6 @@ async def uploadCSV(file: UploadFile=File(...)):
             color_code = res[0]['colorCode']
             if color_code != '':
                 color_codes[res[0]['id']] = color_code
-
     large['colorCode'] = pd.DataFrame([np.nan]*len(large))
     
     for i in range(len(large)):
@@ -154,6 +155,6 @@ async def uploadCSV(file: UploadFile=File(...)):
             large.loc[i,'colorCode'] = color_codes[label]
     large = large.replace('',np.nan)
 
+    # Return result as JSON
     result = large.to_json(orient='records')
-    
     return result
